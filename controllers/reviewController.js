@@ -51,10 +51,9 @@ exports.getReviewSummary = async (req, res) => {
 
     
 
-    // 3. Call Hugging Face API (Free)
-    // We use a model specifically made for summarization (BART-large-CNN)
+    // 3. Call Hugging Face API (using a Faster/Lighter Model)
     const response = await fetch(
-      "https://api-inference.huggingface.co/models/facebook/bart-large-cnn",
+      "https://api-inference.huggingface.co/models/sshleifer/distilbart-cnn-12-6",
       {
         headers: {
           Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
@@ -62,21 +61,17 @@ exports.getReviewSummary = async (req, res) => {
         },
         method: "POST",
         body: JSON.stringify({
-          inputs: reviewText.substring(0, 1000), // Limit text length to avoid errors on free tier
-          parameters: {
-            max_length: 60, // Keep summary short
-            min_length: 20,
-          }
+          inputs: reviewText.substring(0, 1000),
+          options: { wait_for_model: true } // <--- This tells API to wait if loading
         }),
       }
     );
 
     const result = await response.json();
 
-    // 4. Handle Response
+    // Debugging: Print the actual error if it fails
     if (result.error) {
-       // Fallback if API is busy (common on free tier)
-       console.log("AI Busy, using fallback");
+       console.log("❌ Hugging Face Error Details:", result); // <--- Check your terminal for this!
        return res.json({ 
          success: true, 
          summary: "Buyers generally have mixed feelings. (AI is currently overloading, please try again later)." 
