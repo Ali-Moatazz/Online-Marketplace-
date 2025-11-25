@@ -43,7 +43,8 @@ const userSchema = new mongoose.Schema({
   },
   serviceArea: {
     type: String
-  }
+  },
+  flagsCount: { type: Number, default: 0 } 
 }, {
   timestamps: true
 });
