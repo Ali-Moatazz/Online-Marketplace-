@@ -3,41 +3,46 @@ const mongoose = require('mongoose');
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true,
+    required: [true, 'Name is required'],
     trim: true
   },
   email: {
     type: String,
-    required: true,
+    required: [true, 'Email is required'],
     unique: true,
-    lowercase: true
+    lowercase: true,
+    trim: true
   },
   password: {
     type: String,
-    required: true,
+    required: [true, 'Password is required'],
     minlength: 6
   },
   role: {
     type: String,
     enum: ['buyer', 'seller'],
-    default: 'buyer'
+    required: [true, 'Role is required']
   },
   address: {
     type: String,
-    required: true
+    required: [true, 'Address is required for delivery']
   },
   phone: {
     type: String,
-    required: true
+    required: [true, 'Phone number is required']
   },
-  // Seller specific
+  // Seller specific fields
+  storeName: {
+    type: String
+  },
   rating_seller: {
     type: Number,
-    default: 0
+    default: 0,
+    min: 0,
+    max: 5
   },
   serviceArea: {
-    type: String,
-    default: ''
+    type: String
   }
 }, {
   timestamps: true
