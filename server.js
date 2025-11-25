@@ -18,6 +18,9 @@ app.use('/api/flags', flagRoutes);
 const reviewRoutes = require('./routes/reviewRoutes');
 app.use('/api/reviews', reviewRoutes);
 
+const productRoutes = require('./routes/productRoutes');
+app.use('/api/products', productRoutes);
+
 // Test route
 app.get('/', (req, res) => res.send('Server is running!'));
 
