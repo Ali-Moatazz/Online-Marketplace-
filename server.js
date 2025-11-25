@@ -15,10 +15,13 @@ app.use(cors());
 const flagRoutes = require('./routes/flagRoutes');
 app.use('/api/flags', flagRoutes);
 
+const reviewRoutes = require('./routes/reviewRoutes');
+app.use('/api/reviews', reviewRoutes);
+
 // Test route
 app.get('/', (req, res) => res.send('Server is running!'));
 
-// Start server and connect to MongoDB
+// Start server + connect to MongoDB
 const PORT = process.env.PORT || 5000;
 
 mongoose.connect(process.env.MONGO_URI)
