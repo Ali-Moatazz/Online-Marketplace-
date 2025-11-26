@@ -1,4 +1,5 @@
 const Review = require('../models/Review');
+const Groq = require('groq-sdk');
 
 // CREATE REVIEW
 exports.createReview = async (req, res) => {
@@ -32,6 +33,12 @@ exports.deleteReview = async (req, res) => {
 };
 
 
+
+
+const groq = new Groq({
+    apiKey: process.env.GROQ_API_KEY
+});
+
 exports.getReviewSummary = async (req, res) => {
   try {
     const { productId } = req.params;
@@ -40,46 +47,30 @@ exports.getReviewSummary = async (req, res) => {
     const reviews = await Review.find({ productId });
 
     if (reviews.length === 0) {
-      return res.json({ summary: "No reviews to summarize." });
+      return res.json({ success: true, summary: "No reviews to summarize yet." });
     }
 
-    // 2. Combine all comments into one big paragraph
-    const reviewText = reviews
-      .map((r) => r.comment)
-      .filter((c) => c && c.trim() !== "") // Remove empty comments
-      .join(" "); // Join with spaces
+    // 2. Prepare text
+    const reviewText = reviews.map((r) => r.comment).join("\n- ");
 
-    
-
-    // 3. Call Hugging Face API (using a Faster/Lighter Model)
-    const response = await fetch(
-      "https://api-inference.huggingface.co/models/sshleifer/distilbart-cnn-12-6",
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
-          "Content-Type": "application/json",
+    // 3. Call Groq (Llama 3 Model - Free)
+    const chatCompletion = await groq.chat.completions.create({
+      "messages": [
+        {
+          "role": "system",
+          "content": "Summarize the reviews in one very short sentence." 
         },
-        method: "POST",
-        body: JSON.stringify({
-          inputs: reviewText.substring(0, 1000),
-          options: { wait_for_model: true } // <--- This tells API to wait if loading
-        }),
-      }
-    );
+        {
+          "role": "user",
+          "content": reviewText
+        }
+      ],
+      "model": "llama-3.1-8b-instant", // This is a free, fast model
+      "temperature": 0.5,
+      "max_tokens": 50,
+    });
 
-    const result = await response.json();
-
-    // Debugging: Print the actual error if it fails
-    if (result.error) {
-       console.log("❌ Hugging Face Error Details:", result); // <--- Check your terminal for this!
-       return res.json({ 
-         success: true, 
-         summary: "Buyers generally have mixed feelings. (AI is currently overloading, please try again later)." 
-       });
-    }
-
-    // Hugging Face returns an array: [{ summary_text: "..." }]
-    const summary = result[0]?.summary_text || "Could not generate summary.";
+    const summary = chatCompletion.choices[0]?.message?.content || "No summary generated.";
 
     res.json({
       success: true,
@@ -87,7 +78,7 @@ exports.getReviewSummary = async (req, res) => {
     });
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
+    console.error("Groq AI Error:", err);
+    res.status(500).json({ error: "AI Service Failed", details: err.message });
   }
 };
