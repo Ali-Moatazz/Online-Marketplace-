@@ -60,3 +60,12 @@ exports.searchProducts = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+exports.getCategories = async (req, res) => {
+  try {
+    const categories = await Product.distinct('category');
+    res.json(categories);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
