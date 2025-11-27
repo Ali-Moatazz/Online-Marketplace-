@@ -5,6 +5,7 @@ const userController = require('../controllers/userController');
 // Public routes
 router.post('/register', userController.register);
 router.post('/login', userController.login);
+router.post('/logout', userController.logout);
 router.get('/sellers', userController.getSellers);
 router.get('/sellers/:id', userController.getSellerById);
 
