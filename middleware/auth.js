@@ -12,7 +12,12 @@ const auth = async (req, res, next) => {
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // 🔧 FIX: Add same fallback here
+    const decoded = jwt.verify(
+      token, 
+      process.env.JWT_SECRET || 'development_secret_key_min_32_chars_long_123456789' // ← ADD THIS LINE
+    );
+    
     const user = await User.findById(decoded.userId).select('-password');
     
     if (!user) {
