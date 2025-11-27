@@ -17,28 +17,29 @@ app.use(cors());
 // Routes
 // =======================
 
-// ----- Existing APIs (already in your last working server) ----- //
+// ----- AUTH API (MUST BE FIRST) ----- //
+const authRoutes = require('./routes/authRoutes');
+app.use('/api/auth', authRoutes);
 
-// Flags API
-const flagRoutes = require('./routes/flagRoutes');
-app.use('/api/flags', flagRoutes);
+// ----- Users API ----- //
+const userRoutes = require('./routes/userRoutes');
+app.use('/api/users', userRoutes);
 
-// Reviews API
-const reviewRoutes = require('./routes/reviewRoutes');
-app.use('/api/reviews', reviewRoutes);
-
-// Products API
+// ----- Products API ----- //
 const productRoutes = require('./routes/productRoutes');
 app.use('/api/products', productRoutes);
 
-// Orders API
+// ----- Orders API ----- //
 const orderRoutes = require('./routes/orderRoutes');
 app.use('/api/orders', orderRoutes);
 
-// ----- NEW: Users API (added from friend's work) ----- //
-const userRoutes = require('./routes/userRoutes');
-app.use('/api/users', userRoutes);
-// Note: make sure your routes/userRoutes.js has the auth middleware applied to profile routes
+// ----- Reviews API ----- //
+const reviewRoutes = require('./routes/reviewRoutes');
+app.use('/api/reviews', reviewRoutes);
+
+// ----- Flags API ----- //
+const flagRoutes = require('./routes/flagRoutes');
+app.use('/api/flags', flagRoutes);
 
 // =======================
 // Test route
