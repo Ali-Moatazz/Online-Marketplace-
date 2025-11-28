@@ -12,7 +12,12 @@ const auth = async (req, res, next) => {
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // 🔧 FIX: Add same fallback JWT secret as in authController.js
+    const decoded = jwt.verify(
+      token, 
+      process.env.JWT_SECRET || 'development_secret_key_min_32_chars_long_123456789'
+    );
+    
     const user = await User.findById(decoded.userId).select('-password');
     
     if (!user) {
@@ -22,16 +27,21 @@ const auth = async (req, res, next) => {
       });
     }
 
-    req.user = {
-      userId: user._id,
-      role: user.role
+   req.user = {
+      userId: user._id.toString(), // Ensure it's a string
+      id: user._id.toString(),     // Add both for compatibility
+      role: user.role,
+      name: user.name,
+      email: user.email
     };
     
     next();
   } catch (error) {
+    console.error('Auth middleware error:', error.message);
     res.status(401).json({
       success: false,
-      message: 'Token is not valid'
+      message: 'Token is not valid',
+      error: error.message // Added for debugging
     });
   }
 };
