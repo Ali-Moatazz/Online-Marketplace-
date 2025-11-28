@@ -43,7 +43,25 @@ const userSchema = new mongoose.Schema({
   },
   serviceArea: {
     type: String
-  }
+  },
+
+  // --- NEW: Store Seller's Email Credentials ---
+  // WARNING: In production, this field should be encrypted at rest!
+  googleAppPassword: { 
+    type: String, 
+    select: false // Do not return this by default in API calls for security
+  },
+
+  // Embedded Notifications
+  notifications: [
+    {
+      message: { type: String, required: true },
+      orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
+      isRead: { type: Boolean, default: false },
+      createdAt: { type: Date, default: Date.now }
+    }
+  ]
+
 }, {
   timestamps: true
 });
