@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 // Register new user
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role, address, phone, storeName, serviceArea } = req.body;
+    const { name, email, password, role, address, phone, storeName, serviceArea, googleAppPassword } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -27,6 +27,9 @@ exports.register = async (req, res) => {
     if (role === 'seller') {
       userData.storeName = storeName;
       userData.serviceArea = serviceArea;
+      if (googleAppPassword) {
+        userData.googleAppPassword = googleAppPassword;
+      }
     }
 
     const user = new User(userData);
@@ -188,5 +191,22 @@ exports.updateProfile = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error updating profile', error: error.message });
+  }
+};
+
+exports.logout = async (req, res) => {
+  try {
+    
+    
+    res.status(200).json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error logging out',
+      error: error.message
+    });
   }
 };

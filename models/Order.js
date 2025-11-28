@@ -25,6 +25,10 @@ const orderSchema = new mongoose.Schema(
       type: Number,
       required: false
     },
+    comment: {
+      type: String,
+      default: "" 
+    },
     status: {
   type: String,
   enum: ["pending", "shipping", "delivered", "cancelled"], // allowed values
