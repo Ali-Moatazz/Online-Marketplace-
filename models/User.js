@@ -81,7 +81,7 @@ const userSchema = new mongoose.Schema({
       isRead: { type: Boolean, default: false },
       createdAt: { type: Date, default: Date.now }
     }
-  ]
+  ],
 
   flagsCount: { type: Number, default: 0 }
 }, {

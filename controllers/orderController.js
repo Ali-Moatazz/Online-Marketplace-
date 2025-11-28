@@ -138,21 +138,19 @@ exports.getUserOrders = async (req, res) => {
   }
 };
 
-// ... rest of the functions remain similar but you can add role checks as needed
 exports.updateOrder = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
 
     // 1. Find Order, Buyer, AND Seller info
-    // We need to look deep into products -> productId -> sellerId to find the seller
     const existingOrder = await Order.findById(id)
-      .populate('userId') // The Buyer
+      .populate('userId') // Buyer
       .populate({
         path: 'products.productId',
         populate: { 
           path: 'sellerId', 
-          select: 'email storeName googleAppPassword' // Explicitly select the password
+          select: 'email storeName googleAppPassword'
         }
       });
 
@@ -163,8 +161,7 @@ exports.updateOrder = async (req, res) => {
     const oldStatus = existingOrder.status;
     const buyer = existingOrder.userId;
 
-    // 2. Identify the Seller (Assuming single seller per order for simplicity)
-    // If multiple sellers, we pick the first one found in the product list
+    // 2. Identify the Seller (picking product #1 seller)
     let seller = null;
     if (existingOrder.products.length > 0 && existingOrder.products[0].productId) {
       seller = existingOrder.products[0].productId.sellerId;
@@ -179,22 +176,21 @@ exports.updateOrder = async (req, res) => {
 
     // 4. Send Email IF status changed AND Seller has credentials
     if (status && oldStatus !== status && buyer && seller && seller.googleAppPassword) {
-      
+
       console.log(`Attempting to send email via Seller: ${seller.email}`);
 
-      // --- DYNAMIC TRANSPORTER CREATION ---
       const sellerTransporter = nodemailer.createTransport({
         host: 'smtp.gmail.com',
         port: 587,
         secure: false,
         auth: {
-          user: seller.email, // Use SELLER'S email
-          pass: seller.googleAppPassword, // Use SELLER'S App Password
+          user: seller.email,
+          pass: seller.googleAppPassword,
         },
       });
 
       const mailOptions = {
-        from: `"${seller.storeName}" <${seller.email}>`, // Sent from Seller
+        from: `"${seller.storeName}" <${seller.email}>`,
         to: buyer.email,
         subject: `Order Update: #${id}`,
         html: `
@@ -204,7 +200,6 @@ exports.updateOrder = async (req, res) => {
         `
       };
 
-      // Send using the dynamic transporter
       sellerTransporter.sendMail(mailOptions, (err, info) => {
         if (err) {
           console.error(`❌ Failed to send email via ${seller.email}:`, err.message);
@@ -213,29 +208,13 @@ exports.updateOrder = async (req, res) => {
         }
       });
 
-      
-      
     } else if (status && oldStatus !== status) {
       console.log("Skipping email: Seller has not configured App Password.");
     }
 
-    res.json(updatedOrder);
-    const order = await Order.findById(req.params.id);
-
-    if (!order) {
-      return res.status(404).json({ 
-        success: false,
-        error: "Order not found" 
-      });
-    }
-
-    const { status } = req.body;
-    const oldStatus = order.status;
-    order.status = status;
-
-    // If order is being cancelled, restore stock
+    // --- STOCK RESTORATION FOR CANCELLED ORDERS ---
     if (oldStatus !== 'cancelled' && status === 'cancelled') {
-      for (const item of order.products) {
+      for (const item of existingOrder.products) {
         const product = await Product.findById(item.productId);
         if (product) {
           product.stock += item.quantity;
@@ -244,20 +223,20 @@ exports.updateOrder = async (req, res) => {
       }
     }
 
-    await order.save();
-
-    res.json({
+    // ---- SEND SINGLE JSON RESPONSE ----
+    return res.json({
       success: true,
-      order
+      order: updatedOrder
     });
 
   } catch (error) {
-    res.status(500).json({ 
+    return res.status(500).json({ 
       success: false,
       error: error.message 
     });
   }
 };
+
 
 exports.deleteOrder = async (req, res) => {
   try {

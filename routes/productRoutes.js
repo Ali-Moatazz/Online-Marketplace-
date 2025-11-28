@@ -1,27 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const { createProduct, 
-        getAllProducts,
-        searchProducts, // <--- Import the new function
-        getProductById,
-        getCategories
 
- } = require('../controllers/productController');
-
-router.post('/', createProduct);
-router.get('/search', searchProducts);
-router.get('/categories', getCategories);
-router.get('/', getAllProducts);
-router.get('/:id', getProductById);
 const { 
   createProduct, 
   getAllProducts, 
-  getProductsByCategory,  // FROM YOUR VERSION
-  getProductById, 
+  getProductsByCategory, 
+  getProductById,
+  searchProducts, 
+  getCategories,
   purchaseProduct,
   updateProductStock,
-  updateProduct,          // FROM YOUR VERSION
-  deleteProduct           // FROM YOUR VERSION
+  updateProduct,
+  deleteProduct
 } = require('../controllers/productController');
 
 const { auth, requireRole } = require('../middleware/auth');
@@ -29,6 +19,8 @@ const { auth, requireRole } = require('../middleware/auth');
 // Public routes
 router.get('/', getAllProducts);
 router.get('/category/:category', getProductsByCategory); // YOUR ROUTE
+router.get('/search', searchProducts);
+router.get('/categories', getCategories);
 router.get('/:id', getProductById);                       // HIS ROUTE
 
 // Protected routes
