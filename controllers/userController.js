@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Flag = require('../models/Flag');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -20,14 +21,7 @@ exports.register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Create user object
-    const userData = {
-      name,
-      email,
-      password: hashedPassword,
-      role,
-      address,
-      phone
-    };
+    const userData = { name, email, password: hashedPassword, role, address, phone };
 
     // Add seller-specific fields
     if (role === 'seller') {
@@ -80,25 +74,19 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Find user by email
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid email or password'
-      });
+      return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
 
-    // Check password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid email or password'
-      });
+      return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
 
-    // Generate JWT token
+    // Count flags for this user
+    const flagsCount = await Flag.countDocuments({ reportedId: user._id });
+
     const token = jwt.sign(
       { userId: user._id, role: user.role },
       process.env.JWT_SECRET || 'fallback_secret',
@@ -118,50 +106,32 @@ exports.login = async (req, res) => {
           phone: user.phone,
           storeName: user.storeName,
           serviceArea: user.serviceArea,
-          rating_seller: user.rating_seller
+          rating_seller: user.rating_seller,
+          flagsCount
         },
         token
       }
     });
 
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error logging in',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Error logging in', error: error.message });
   }
 };
 
 // Get user profile
 exports.getProfile = async (req, res) => {
   try {
-    res.json({
-      success: true,
-      message: 'Profile endpoint is working'
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching profile',
-      error: error.message
-    });
-  }
-};
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
-// Update user profile
-exports.updateProfile = async (req, res) => {
-  try {
+    const flagsCount = await Flag.countDocuments({ reportedId: user._id });
+
     res.json({
       success: true,
-      message: 'Update profile endpoint is working'
+      data: { ...user.toObject(), flagsCount }
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error updating profile',
-      error: error.message
-    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 };
 
@@ -170,49 +140,57 @@ exports.getSellers = async (req, res) => {
   try {
     const sellers = await User.find({ role: 'seller' }).select('-password');
 
+    const sellersWithFlags = await Promise.all(
+      sellers.map(async seller => {
+        const flagsCount = await Flag.countDocuments({ reportedId: seller._id });
+        return { ...seller.toObject(), flagsCount };
+      })
+    );
+
     res.json({
       success: true,
       data: {
-        sellers,
-        total: sellers.length
+        sellers: sellersWithFlags,
+        total: sellersWithFlags.length
       }
     });
-
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching sellers',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Error fetching sellers', error: error.message });
   }
 };
 
 // Get seller by ID
 exports.getSellerById = async (req, res) => {
   try {
-    const seller = await User.findOne({ 
-      _id: req.params.id, 
-      role: 'seller' 
-    }).select('-password');
+    const seller = await User.findOne({ _id: req.params.id, role: 'seller' }).select('-password');
+    if (!seller) return res.status(404).json({ success: false, message: 'Seller not found' });
 
-    if (!seller) {
-      return res.status(404).json({
-        success: false,
-        message: 'Seller not found'
-      });
-    }
+    const flagsCount = await Flag.countDocuments({ reportedId: seller._id });
 
     res.json({
       success: true,
-      data: { seller }
+      data: { ...seller.toObject(), flagsCount }
     });
-
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching seller',
-      error: error.message
+    res.status(500).json({ success: false, message: 'Error fetching seller', error: error.message });
+  }
+};
+
+// Update user profile
+exports.updateProfile = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.user.id, req.body, { new: true }).select('-password');
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    const flagsCount = await Flag.countDocuments({ reportedId: user._id });
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: { ...user.toObject(), flagsCount }
     });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error updating profile', error: error.message });
   }
 };
 
