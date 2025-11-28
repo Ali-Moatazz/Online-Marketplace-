@@ -5,19 +5,17 @@ const {
   createOrder,
   getOrders,
   updateOrder,
-  deleteOrder
+  deleteOrder,
+  getUserOrders
 } = require('../controllers/orderController');
 
-// Create Order
-router.post('/', createOrder);
+const { auth } = require('../middleware/auth');
 
-// Get All Orders
-router.get('/', getOrders);
-
-// Update Order
-router.put('/:id', updateOrder);
-
-// Delete Order
-router.delete('/:id', deleteOrder);
+// All order routes require authentication
+router.post('/', auth, createOrder);
+router.get('/', auth, getOrders);
+router.get('/user/:userId', auth, getUserOrders);
+router.put('/:id', auth, updateOrder);
+router.delete('/:id', auth, deleteOrder);
 
 module.exports = router;
