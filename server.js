@@ -53,7 +53,7 @@ app.get('/', (req, res) => res.send('Server is running!'));
 const PORT = process.env.PORT || 5000;
 
 // ---- Using .env variable or fallback to local MongoDB ---- //
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/marketplace';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/MarketPlace';
 
 mongoose.connect(MONGO_URI)
   .then(() => {

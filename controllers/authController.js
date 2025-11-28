@@ -23,10 +23,9 @@ exports.register = async (req, res) => {
     user.password = await bcrypt.hash(password, salt);
     await user.save();
 
-    // 🔧 FIX: Add fallback JWT secret
     const token = jwt.sign(
       { userId: user._id }, 
-      process.env.JWT_SECRET || 'development_secret_key_min_32_chars_long_123456789', // ← ADD THIS LINE
+      process.env.JWT_SECRET || 'development_secret_key_min_32_chars_long_123456789',
       { expiresIn: '30d' }
     );
 
@@ -69,10 +68,9 @@ exports.login = async (req, res) => {
       });
     }
 
-    // 🔧 FIX: Add same fallback here
     const token = jwt.sign(
       { userId: user._id },
-      process.env.JWT_SECRET || 'development_secret_key_min_32_chars_long_123456789', // ← ADD THIS LINE
+      process.env.JWT_SECRET || 'development_secret_key_min_32_chars_long_123456789',
       { expiresIn: '30d' }
     );
 
