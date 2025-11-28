@@ -285,6 +285,9 @@ exports.getCategories = async (req, res) => {
     res.json(categories);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+};
+
 exports.updateProductStock = async (req, res) => {
   try {
     // Check if user has seller role
