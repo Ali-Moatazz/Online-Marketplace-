@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role, address, phone, storeName, serviceArea } = req.body;
+    const { name, email, password, role, address, phone, storeName, serviceArea,googleAppPassword } = req.body;
 
     let user = await User.findOne({ email });
     if (user) {
@@ -16,7 +16,7 @@ exports.register = async (req, res) => {
 
     user = new User({
       name, email, password, role, address, phone,
-      ...(role === 'seller' && { storeName, serviceArea })
+      ...(role === 'seller' && { storeName, serviceArea,googleAppPassword })
     });
 
     const salt = await bcrypt.genSalt(10);
